@@ -1,12 +1,8 @@
 package examples;
 
-import io.vertx.codegen.annotations.CacheReturn;
-import io.vertx.codegen.annotations.Fluent;
-import io.vertx.codegen.annotations.GenIgnore;
 import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.*;
-import io.vertx.core.http.impl.MimeMapping;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.AuthProvider;
@@ -27,17 +23,12 @@ import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.ext.web.handler.sockjs.SockJSHandlerOptions;
-import io.vertx.ext.web.impl.ParsableMIMEValue;
-import io.vertx.ext.web.impl.Utils;
 import io.vertx.ext.web.sstore.ClusteredSessionStore;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.ext.web.sstore.SessionStore;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-
-import static io.vertx.codegen.annotations.GenIgnore.PERMITTED_TYPE;
 
 /**
  * These are the examples used in the documentation.
@@ -46,6 +37,15 @@ import static io.vertx.codegen.annotations.GenIgnore.PERMITTED_TYPE;
  * @author <a href="http://tfox.org">Tim Fox</a>
  */
 public class WebExamples {
+
+  public static void main(String[] args) {
+    Vertx vertx = Vertx.vertx();
+    HttpServer server = vertx.createHttpServer();
+
+    Router router = Router.router(vertx);
+    new WebExamples().example7(router);
+    server.requestHandler(router).listen(8080);
+  }
 
   public void example1(Vertx vertx) {
     HttpServer server = vertx.createHttpServer();
@@ -82,39 +82,28 @@ public class WebExamples {
 
   }
 
-  public void example3(Router router) {
+  public void example3(Vertx vertx) {
+    HttpServer server = vertx.createHttpServer();
 
-    Route route = router.route().path("/some/path/");
+    Router router = Router.router(vertx);
 
-    route.handler(routingContext -> {
+    router.route().path("/some/path/").handler(routingContext -> {
       // This handler will be called for the following request paths:
 
-      // `/some/path`
       // `/some/path/`
       // `/some/path//`
       //
       // but not:
       // `/some/path/subdir`
-    });
-
-  }
-
-  public void example3_1(Router router) {
-
-    Route route = router.route().path("/some/path/*");
-
-    route.handler(routingContext -> {
-      // This handler will be called for any path that starts with
-      // `/some/path/`, e.g.
-
       // `/some/path`
-      // `/some/path/`
-      // `/some/path/subdir`
-      // `/some/path/subdir/blah.html`
-      //
-      // but not:
-      // `/some/bath`
+      HttpServerResponse response = routingContext.response();
+      response.putHeader("content-type", "text/plain");
+
+      // Write to the response and end it
+      response.end("Hello World from /some/path/!");
     });
+
+    server.requestHandler(router).listen(8080);
 
   }
 
@@ -123,14 +112,27 @@ public class WebExamples {
     Route route = router.route("/some/path/*");
 
     route.handler(routingContext -> {
-      // This handler will be called same as previous example
+      // This handler will be called for any path that starts with
+      // `/some/path/`, e.g.
+
+      // `/some/path/`
+      // `/some/path/subdir`
+      // `/some/path/subdir/blah.html`
+      //
+      // but not:
+      // `/some/path`
+      HttpServerResponse response = routingContext.response();
+      response.putHeader("content-type", "text/plain");
+
+      // Write to the response and end it
+      response.end("vertx web example4!");
     });
 
   }
 
   public void example4_1(Router router) {
 
-    Route route = router.route(HttpMethod.POST, "/catalogue/products/:producttype/:productid/");
+    Route route = router.route(HttpMethod.GET, "/catalogue/products/:producttype/:productid");
 
     route.handler(routingContext -> {
 
@@ -138,6 +140,11 @@ public class WebExamples {
       String productID = routingContext.request().getParam("productid");
 
       // Do something with them...
+      HttpServerResponse response = routingContext.response();
+      response.putHeader("content-type", "text/plain");
+
+      // Write to the response and end it
+      response.end("ProductType: " + productType + " ProductId: " + productID);
     });
 
   }
@@ -159,6 +166,11 @@ public class WebExamples {
 
       // But not:
       // /bar/wibble
+      HttpServerResponse response = routingContext.response();
+      response.putHeader("content-type", "text/plain");
+
+      // Write to the response and end it
+      response.end("Any thing ends with foo");
     });
 
   }
@@ -168,9 +180,7 @@ public class WebExamples {
     Route route = router.routeWithRegex(".*foo");
 
     route.handler(routingContext -> {
-
       // This handler will be called same as previous example
-
     });
 
   }
@@ -208,24 +218,16 @@ public class WebExamples {
 
   public void example7(Router router) {
 
-    Route route = router.route().method(HttpMethod.POST);
+    Route route = router.route().method(HttpMethod.GET);
 
     route.handler(routingContext -> {
 
       // This handler will be called for any POST request
+      HttpServerResponse response = routingContext.response();
+      response.putHeader("content-type", "text/plain");
 
-    });
-
-  }
-
-  public void example8(Router router) {
-
-    Route route = router.route(HttpMethod.POST, "/some/path/");
-
-    route.handler(routingContext -> {
-
-      // This handler will be called for any POST request to a URI path starting with /some/path/
-
+      // Write to the response and end it
+      response.end("match get method");
     });
 
   }
